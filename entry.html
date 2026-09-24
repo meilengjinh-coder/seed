@@ -45,7 +45,7 @@
   // ---- 发布时注入 ----
   var PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA4jKZN6uXYAFkSGS/3pBJkvckQ8Y/MPky43HF+Crqrvg=\n-----END PUBLIC KEY-----\n";      // Ed25519 SPKI 公钥 PEM(与客户端同一把)
   var MIRRORS = ["https://cdn.jsdelivr.net/gh/meilengjinh-coder/seed@main/entry-manifest.json","https://raw.githubusercontent.com/meilengjinh-coder/seed/main/entry-manifest.json"];                // 签名清单的镜像地址,按序尝试
-  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MTExMDk4NiwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MTExMH0=","signature":"pvjVz5vV54E2BkXqcK3uhS1l7WHlRF1YLtQ3dxFL80HNKZOwyban6AwpTCxBw35N0PZW8d2FwTfN6bAdI39ACQ=="};              // 烘焙的签名清单:所有镜像都挂时兜底
+  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MTQwNjE5OSwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MTQwNn0=","signature":"/MC44lpdBtgjysJTv3bsAypNk6WlrMdvCDmxLGabOdGgmom3tyozRZ2+DnS5aZIOw3PQE2WUbCMf2LbEcnosAg=="};              // 烘焙的签名清单:所有镜像都挂时兜底
 
   function b64ToBytes(b64) {
     var bin = atob(b64), out = new Uint8Array(bin.length);
@@ -110,12 +110,16 @@
   verify(FALLBACK).then(function (baked) {
     if (baked) render(baked, false);
     return Promise.all(MIRRORS.map(fetchMirror)).then(function (results) {
-      var best = baked || null;
+      // 先在验签通过的镜像里挑版本最高的
+      var fromMirror = null;
       for (var i = 0; i < results.length; i++) {
-        if (results[i] && (!best || results[i].version > best.version)) best = results[i];
+        if (results[i] && (!fromMirror || results[i].version > fromMirror.version)) fromMirror = results[i];
       }
-      var live = best && (!baked || best.version >= baked.version) && results.indexOf(best) !== -1;
-      if (best) render(best, !!live);
+      // 镜像版本 >= 烘焙版本就用镜像(相等也算:刚发布时两者本来就一样,
+      // 早先写成 > 会挑回烘焙那份并误报「镜像暂不可达」)
+      var useMirror = fromMirror && (!baked || fromMirror.version >= baked.version);
+      var best = useMirror ? fromMirror : baked;
+      if (best) render(best, !!useMirror);
     });
   });
 })();
