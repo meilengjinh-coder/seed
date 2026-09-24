@@ -44,8 +44,8 @@
   "use strict";
   // ---- 发布时注入 ----
   var PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA4jKZN6uXYAFkSGS/3pBJkvckQ8Y/MPky43HF+Crqrvg=\n-----END PUBLIC KEY-----\n";      // Ed25519 SPKI 公钥 PEM(与客户端同一把)
-  var MIRRORS = ["https://cdn.jsdelivr.net/gh/meilengjinh-coder/seed@main/entry-manifest.json","https://raw.githubusercontent.com/meilengjinh-coder/seed/main/entry-manifest.json"];                // 签名清单的镜像地址,按序尝试
-  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MTU4NzgzMywibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MTU4N30=","signature":"6S7W1roibBF93TlcQlRSDcdQAljEhsdY5b/69vf+sExUmvp5EhF1k8Hm9d71jo/wkEunvDNorehtdZj2gQgmAQ=="};              // 烘焙的签名清单:所有镜像都挂时兜底
+  var MIRRORS = ["https://api.huangju.net/seed/entry","https://seed.huangju.net/seed/entry","https://api.yanyushorttv.cc/seed/entry","https://api.yanyushorttv.top/seed/entry","https://seed.yanyushorttv.bond/seed/entry","https://cdn.jsdelivr.net/gh/meilengjinh-coder/seed@main/entry-manifest.json","https://raw.githubusercontent.com/meilengjinh-coder/seed/main/entry-manifest.json"];                // 签名清单的镜像地址,按序尝试
+  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0NDEyMDAxMSwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0NDEyMH0=","signature":"lyR6ucF2Frmr2au7MMA89anHQUYIcPjdX5WTbU+dfiWNyT7hy19VOvr7PH4ZxefZpocyU0Mg9M1Qeg1+gDa+DQ=="};              // 烘焙的签名清单:所有镜像都挂时兜底
 
   function b64ToBytes(b64) {
     var bin = atob(b64), out = new Uint8Array(bin.length);
