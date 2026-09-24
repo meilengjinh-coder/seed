@@ -43,9 +43,9 @@
 (function () {
   "use strict";
   // ---- 发布时注入 ----
-  var PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAlUG0tRDsZiBsMSSN7X0T/B41kY1BsszrsRupPuyU9Hs=\n-----END PUBLIC KEY-----";      // Ed25519 SPKI 公钥 PEM(与客户端同一把)
+  var PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA4jKZN6uXYAFkSGS/3pBJkvckQ8Y/MPky43HF+Crqrvg=\n-----END PUBLIC KEY-----\n";      // Ed25519 SPKI 公钥 PEM(与客户端同一把)
   var MIRRORS = ["https://cdn.jsdelivr.net/gh/meilengjinh-coder/seed@main/entry-manifest.json","https://raw.githubusercontent.com/meilengjinh-coder/seed/main/entry-manifest.json"];                // 签名清单的镜像地址,按序尝试
-  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MDc5MTQyOSwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MDc5MX0=","signature":"XgdUFatNHxFJVnmJgNx9Jidptp1zgY/9FtXrqPe3jzlwrTYQn8CK4L533TkIls5A2Zuk/UNGRZVH2NPjzIQtDg=="};              // 烘焙的签名清单:所有镜像都挂时兜底
+  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MTExMDk4NiwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MTExMH0=","signature":"pvjVz5vV54E2BkXqcK3uhS1l7WHlRF1YLtQ3dxFL80HNKZOwyban6AwpTCxBw35N0PZW8d2FwTfN6bAdI39ACQ=="};              // 烘焙的签名清单:所有镜像都挂时兜底
 
   function b64ToBytes(b64) {
     var bin = atob(b64), out = new Uint8Array(bin.length);
