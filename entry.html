@@ -45,7 +45,7 @@
   // ---- 发布时注入 ----
   var PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA4jKZN6uXYAFkSGS/3pBJkvckQ8Y/MPky43HF+Crqrvg=\n-----END PUBLIC KEY-----\n";      // Ed25519 SPKI 公钥 PEM(与客户端同一把)
   var MIRRORS = ["https://cdn.jsdelivr.net/gh/meilengjinh-coder/seed@main/entry-manifest.json","https://raw.githubusercontent.com/meilengjinh-coder/seed/main/entry-manifest.json"];                // 签名清单的镜像地址,按序尝试
-  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MTQwNjE5OSwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MTQwNn0=","signature":"/MC44lpdBtgjysJTv3bsAypNk6WlrMdvCDmxLGabOdGgmom3tyozRZ2+DnS5aZIOw3PQE2WUbCMf2LbEcnosAg=="};              // 烘焙的签名清单:所有镜像都挂时兜底
+  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MTU4NzgzMywibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MTU4N30=","signature":"6S7W1roibBF93TlcQlRSDcdQAljEhsdY5b/69vf+sExUmvp5EhF1k8Hm9d71jo/wkEunvDNorehtdZj2gQgmAQ=="};              // 烘焙的签名清单:所有镜像都挂时兜底
 
   function b64ToBytes(b64) {
     var bin = atob(b64), out = new Uint8Array(bin.length);
@@ -103,7 +103,10 @@
     document.getElementById("meta").textContent =
       "版本 v" + manifest.version + " · " + (live ? "已更新到最新" : "离线兜底(镜像暂不可达)") +
       " · " + new Date(manifest.issuedAt).toLocaleString();
-    if (!live) { var w = document.getElementById("warn"); w.textContent = "当前显示的是烘焙入口,可能不是最新。"; w.hidden = false; }
+    // 两次 render:先烘焙(live=false)再镜像(live=true)。必须显式收回警告,
+    // 否则第一次显示后一直挂着,页面自相矛盾(状态行说已最新、警告说是烘焙)。
+    var w = document.getElementById("warn");
+    if (live) { w.hidden = true; } else { w.textContent = "当前显示的是烘焙入口,可能不是最新。"; w.hidden = false; }
   }
 
   // 先用烘焙兜底立刻可用,再后台拉最新镜像择优覆盖
