@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>红果黄剧 · 最新入口</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f1115; color: #e8eaed; }
+  .card { width: 100%; max-width: 460px; background: #171a21; border: 1px solid #262b36;
+    border-radius: 18px; padding: 28px 24px; text-align: center; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .sub { color: #9aa3b2; font-size: 13px; margin: 0 0 20px; }
+  .msg { background: #1f2430; border-radius: 12px; padding: 12px 14px; font-size: 14px;
+    color: #cfd6e4; margin: 0 0 18px; }
+  a.entry { display: block; text-decoration: none; background: #e11d48; color: #fff;
+    font-weight: 700; font-size: 16px; padding: 14px; border-radius: 12px; margin: 10px 0; }
+  a.entry.alt { background: #2a2f3a; color: #e8eaed; }
+  .anchors { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .anchors a { color: #7dd3fc; text-decoration: none; font-size: 13px; border: 1px solid #2a2f3a;
+    border-radius: 999px; padding: 6px 14px; }
+  .meta { margin-top: 18px; color: #5b6472; font-size: 11px; }
+  .warn { color: #fca5a5; font-size: 12px; margin-top: 12px; }
+  .tip { color: #9aa3b2; font-size: 12px; margin-top: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>红果黄剧</h1>
+  <p class="sub">这是官方永久入口页 · 请收藏本页</p>
+  <div id="msg" class="msg" hidden></div>
+  <div id="entries"><p class="sub">正在获取最新入口…</p></div>
+  <div id="anchors" class="anchors"></div>
+  <p id="warn" class="warn" hidden></p>
+  <p class="tip">若入口打不开,几分钟后刷新本页会自动更新到最新可用地址。建议把本页加入收藏夹。</p>
+  <p id="meta" class="meta"></p>
+</div>
+<script>
+(function () {
+  "use strict";
+  // ---- 发布时注入 ----
+  var PUBLIC_KEY_PEM = "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAlUG0tRDsZiBsMSSN7X0T/B41kY1BsszrsRupPuyU9Hs=\n-----END PUBLIC KEY-----";      // Ed25519 SPKI 公钥 PEM(与客户端同一把)
+  var MIRRORS = ["https://cdn.jsdelivr.net/gh/meilengjinh-coder/seed@main/entry-manifest.json","https://raw.githubusercontent.com/meilengjinh-coder/seed/main/entry-manifest.json"];                // 签名清单的镜像地址,按序尝试
+  var FALLBACK = {"alg":"ed25519","payload":"eyJlbnRyaWVzIjpbImh0dHBzOi8vaHVhbmdqdS5uZXQiLCJodHRwczovL3lhbnl1c2hvcnR0di5jYyIsImh0dHBzOi8veWFueXVzaG9ydHR2LnRvcCJdLCJpc3N1ZWRBdCI6MTc5MDI0MDc5MTQyOSwibWVzc2FnZSI6IuS4u+ermeaJk+S4jeW8gD/mlLbol4/mnKzpobUs6ZqP5pe25ou/5Yiw5pyA5paw5YWl5Y+jIiwidmVyc2lvbiI6MTc5MDI0MDc5MX0=","signature":"XgdUFatNHxFJVnmJgNx9Jidptp1zgY/9FtXrqPe3jzlwrTYQn8CK4L533TkIls5A2Zuk/UNGRZVH2NPjzIQtDg=="};              // 烘焙的签名清单:所有镜像都挂时兜底
+
+  function b64ToBytes(b64) {
+    var bin = atob(b64), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  // 与 packages/shared canonicalizeManifest 等价
+  function canonicalize(m) {
+    var keys = Object.keys(m).sort(), o = {};
+    for (var i = 0; i < keys.length; i++) { if (m[keys[i]] !== undefined) o[keys[i]] = m[keys[i]]; }
+    return JSON.stringify(o);
+  }
+  var keyPromise = null;
+  function importKey() {
+    if (keyPromise) return keyPromise;
+    var der = b64ToBytes(PUBLIC_KEY_PEM.replace(/-----[^-]+-----/g, "").replace(/\s+/g, ""));
+    keyPromise = crypto.subtle.importKey("spki", der, { name: "Ed25519" }, false, ["verify"]);
+    return keyPromise;
+  }
+  function verify(signed) {
+    if (!signed || signed.alg !== "ed25519" || !signed.payload || !signed.signature) return Promise.resolve(null);
+    var data = b64ToBytes(signed.payload);
+    return importKey().then(function (key) {
+      return crypto.subtle.verify({ name: "Ed25519" }, key, b64ToBytes(signed.signature), data);
+    }).then(function (ok) {
+      if (!ok) return null;
+      var canonical = new TextDecoder().decode(data);
+      var parsed = JSON.parse(canonical);
+      if (canonicalize(parsed) !== canonical) return null;
+      return parsed;
+    }).catch(function () { return null; });
+  }
+  function fetchMirror(url) {
+    return fetch(url, { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { return verify(j); })
+      .catch(function () { return null; });
+  }
+  function render(manifest, live) {
+    var entriesEl = document.getElementById("entries");
+    entriesEl.innerHTML = "";
+    var list = (manifest && manifest.entries) || [];
+    if (!list.length) { entriesEl.innerHTML = '<p class="sub">暂无可用入口,请稍后再试。</p>'; return; }
+    for (var i = 0; i < list.length; i++) {
+      var a = document.createElement("a");
+      a.className = "entry" + (i === 0 ? "" : " alt");
+      a.href = list[i]; a.rel = "noopener";
+      a.textContent = (i === 0 ? "▶ 进入" + (list.length > 1 ? "(线路1)" : "") : "备用线路" + (i + 1));
+      entriesEl.appendChild(a);
+    }
+    if (manifest.message) { var m = document.getElementById("msg"); m.textContent = manifest.message; m.hidden = false; }
+    var anchors = document.getElementById("anchors");
+    if (manifest.telegram) { var t = document.createElement("a"); t.href = manifest.telegram; t.textContent = "Telegram 频道"; t.rel = "noopener"; anchors.appendChild(t); }
+    if (manifest.x) { var x = document.createElement("a"); x.href = manifest.x; x.textContent = "X / Twitter"; x.rel = "noopener"; anchors.appendChild(x); }
+    document.getElementById("meta").textContent =
+      "版本 v" + manifest.version + " · " + (live ? "已更新到最新" : "离线兜底(镜像暂不可达)") +
+      " · " + new Date(manifest.issuedAt).toLocaleString();
+    if (!live) { var w = document.getElementById("warn"); w.textContent = "当前显示的是烘焙入口,可能不是最新。"; w.hidden = false; }
+  }
+
+  // 先用烘焙兜底立刻可用,再后台拉最新镜像择优覆盖
+  verify(FALLBACK).then(function (baked) {
+    if (baked) render(baked, false);
+    return Promise.all(MIRRORS.map(fetchMirror)).then(function (results) {
+      var best = baked || null;
+      for (var i = 0; i < results.length; i++) {
+        if (results[i] && (!best || results[i].version > best.version)) best = results[i];
+      }
+      var live = best && (!baked || best.version >= baked.version) && results.indexOf(best) !== -1;
+      if (best) render(best, !!live);
+    });
+  });
+})();
+</script>
+</body>
+</html>
